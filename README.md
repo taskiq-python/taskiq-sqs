@@ -1,6 +1,6 @@
 # TaskIQ SQS Broker
 
-Mostly generic SQS async broker for TaskIQ. 
+Mostly generic SQS async broker for TaskIQ.
 
 ## Expiration
 
