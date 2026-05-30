@@ -1,10 +1,20 @@
+import uuid
+from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock
 
 import pytest
 from taskiq.result import TaskiqResult
 
+from tests.conftest import AWSCredentials
+
 from taskiq_sqs import S3ResultBackend
-from taskiq_sqs.exceptions import ResultIsMissingError
+from taskiq_sqs.bucket import S3Bucket
+from taskiq_sqs.exceptions import BucketNotFoundError, ResultIsMissingError
+
+
+if TYPE_CHECKING:
+    from types_aiobotocore_s3.client import S3Client
 
 
 @pytest.fixture
@@ -118,3 +128,84 @@ class TestResultBackend:
         assert retrieved_result.return_value == "test_value"
         assert retrieved_result.is_err is True
         assert retrieved_result.log == "test_log"
+
+
+class TestBucketDeclare:
+    tmp_bucket_name: str
+    backend: S3ResultBackend | None
+
+    @staticmethod
+    async def _bucket_exists(s3_client: "S3Client", name: str) -> bool:
+        response = await s3_client.list_buckets()
+        return any(bucket["Name"] == name for bucket in response.get("Buckets", []))
+
+    @pytest.fixture(autouse=True)
+    async def _setup(self, s3_client: "S3Client") -> AsyncGenerator[None, Any]:
+        self.tmp_bucket_name = f"declare-test-{uuid.uuid4().hex[:8]}"
+        self.backend = None
+        yield
+        if self.backend is not None:
+            await self.backend.shutdown()
+        if not await self._bucket_exists(s3_client, self.tmp_bucket_name):
+            return
+        response = await s3_client.list_objects_v2(Bucket=self.tmp_bucket_name)
+        objects = [{"Key": obj["Key"]} for obj in response.get("Contents", [])]
+        if objects:
+            await s3_client.delete_objects(Bucket=self.tmp_bucket_name, Delete={"Objects": objects})
+        await s3_client.delete_bucket(Bucket=self.tmp_bucket_name)
+
+    async def test_when_declare_true_and_bucket_missing__then_bucket_is_created_on_startup(
+        self,
+        aws_credentials: AWSCredentials,
+        s3_client: "S3Client",
+    ) -> None:
+        self.backend = S3ResultBackend(
+            bucket=S3Bucket(name=self.tmp_bucket_name, declare=True),
+            **aws_credentials,
+        )
+        await self.backend.startup()
+
+        assert await self._bucket_exists(s3_client, self.tmp_bucket_name)
+
+    async def test_when_declare_false_and_bucket_missing__then_startup_raises(
+        self,
+        aws_credentials: AWSCredentials,
+        s3_client: "S3Client",
+    ) -> None:
+        backend = S3ResultBackend(
+            bucket=S3Bucket(name=self.tmp_bucket_name, declare=False),
+            **aws_credentials,
+        )
+
+        with pytest.raises(BucketNotFoundError):
+            await backend.startup()
+
+        assert not await self._bucket_exists(s3_client, self.tmp_bucket_name)
+
+    async def test_when_declare_false_and_bucket_exists__then_startup_succeeds(
+        self,
+        aws_credentials: AWSCredentials,
+        s3_client: "S3Client",
+        s3_bucket: str,
+    ) -> None:
+        self.backend = S3ResultBackend(
+            bucket=S3Bucket(name=s3_bucket, declare=False),
+            **aws_credentials,
+        )
+        await self.backend.startup()
+
+        assert await self._bucket_exists(s3_client, s3_bucket)
+
+    async def test_when_declare_true_and_bucket_already_exists__then_startup_is_idempotent(
+        self,
+        aws_credentials: AWSCredentials,
+        s3_client: "S3Client",
+        s3_bucket: str,
+    ) -> None:
+        self.backend = S3ResultBackend(
+            bucket=S3Bucket(name=s3_bucket, declare=True),
+            **aws_credentials,
+        )
+        await self.backend.startup()
+
+        assert await self._bucket_exists(s3_client, s3_bucket)
