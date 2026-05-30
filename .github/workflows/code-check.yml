@@ -40,12 +40,6 @@ jobs:
           MINISTACK_ACCOUNT_ID: "000000000000"
           MINISTACK_REGION: us-east-1
           LOG_LEVEL: INFO
-        options: >-
-          --health-cmd "curl -f http://localhost:4566/_ministack/health"
-          --health-interval 2s
-          --health-timeout 5s
-          --health-retries 30
-          --health-start-period 5s
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
