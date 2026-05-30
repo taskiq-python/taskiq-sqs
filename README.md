@@ -1,8 +1,55 @@
-# TaskIQ SQS Broker
+# taskiq-sqs
 
-Mostly generic SQS async broker for TaskIQ.
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/taskiq-sqs?style=for-the-badge&logo=python)](https://pypi.org/project/taskiq-sqs/)
+[![PyPI](https://img.shields.io/pypi/v/taskiq-sqs?style=for-the-badge&logo=pypi)](https://pypi.org/project/taskiq-sqs/)
+[![Checks](https://img.shields.io/github/check-runs/taskiq-python/taskiq-sqs/main?nameFilter=test%20(ubuntu-latest,%203.12)&style=for-the-badge)](https://github.com/taskiq-python/taskiq-sqs)
 
-## Expiration
+This library provides SQS broker and S3 result backend for TaskIQ.
+
+## Installation
+
+```bash
+pip install taskiq-sqs
+```
+
+## Basic usage
+
+Here is an example of how to use the SQS broker with the S3 backend:
+
+```python
+import asyncio
+from taskiq_sqs import S3Bucket, S3ResultBackend, SQSBroker
+
+QUEUE_NAME = "my-queue"
+broker = SQSBroker(
+    "http://localhost:4566/000000000000/my-queue",  # specify existing queue
+    sqs_region_override="us-east-1"
+).with_result_backend(
+    S3ResultBackend(
+        bucket=S3Bucket(name="response-bucket")  # by default backend will create bucket for your if it not exists
+    )
+)
+
+@broker.task()
+async def i_love_aws() -> None:
+    await asyncio.sleep(1)
+    print("Hello there!")
+
+async def main() -> None:
+    await broker.startup()
+    task = await i_love_aws.kiq()
+    print(await task.wait_result())
+    await broker.shutdown()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+How to run:
+- run worker first with `taskiq worker examples.example_broker:broker`
+- after that run broker to create a task and wait for result: `python examples/example_broker.py`
+
+## Message expiration
 
 If you set the `sqs_expiry` label to a unix timestamp, the message will be discarded if the worker receives it after that time.
 
