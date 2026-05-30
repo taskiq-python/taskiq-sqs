@@ -6,48 +6,52 @@ import asyncio
 import logging
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, AsyncGenerator, Callable, Optional, Union
+from typing import TYPE_CHECKING
 
 import boto3
 from asyncer import asyncify
 from botocore.exceptions import ClientError
 from taskiq import AsyncBroker
-from taskiq.abc.result_backend import AsyncResultBackend
-from taskiq.acks import AckableMessage
-from taskiq.exceptions import BrokerError
-from taskiq.message import BrokerMessage
 
 from taskiq_sqs.aws import get_container_credentials
 
+
 if TYPE_CHECKING:
-    from typing import Mapping
+    from collections.abc import AsyncGenerator, Callable, Mapping
 
     from mypy_boto3_sqs.service_resource import Queue, SQSServiceResource
+    from taskiq.abc.result_backend import AsyncResultBackend
+    from taskiq.acks import AckableMessage
+    from taskiq.message import BrokerMessage
 
 logger = logging.getLogger(__name__)
 
 
-def stamp() -> int:
+def stamp() -> int:  # noqa: D103
     return int(datetime.now(tz=timezone.utc).timestamp())
+
+
+class SQSBrokerError(Exception):
+    """Generic SQS broker error."""
 
 
 class SQSBroker(AsyncBroker):
     """AWS SQS TaskIQ broker."""
 
-    def __init__(
+    def __init__(  # noqa: D107
         self,
         sqs_queue_url: str,
         wait_time_seconds: int = 0,  # Used for long polling
         max_number_of_messages: int = 1,  # size of batch to receive from the queue
-        result_backend: Optional[AsyncResultBackend] = None,
-        task_id_generator: Optional[Callable[[], str]] = None,
+        result_backend: AsyncResultBackend | None = None,
+        task_id_generator: Callable[[], str] | None = None,
         sqs_region_override: str | None = None,
-        force_ecs_container_credentials=False,
+        force_ecs_container_credentials: bool = False,
     ) -> None:
         super().__init__(result_backend, task_id_generator)
 
         if not sqs_queue_url or not sqs_queue_url.startswith("http"):
-            raise BrokerError("A valid SQS Queue URL is required")
+            raise SQSBrokerError("A valid SQS Queue URL is required")
 
         # NOTE: This bypasses the normal order of operations for boto3 auth and
         #       goes straight to using the ECS role creds from the metadata
@@ -57,18 +61,18 @@ class SQSBroker(AsyncBroker):
         self.sqs_region_override = sqs_region_override
         self.sqs_queue_url = sqs_queue_url
         self._sqs: SQSServiceResource | None = None
-        self._sqs_queue: Optional[Queue] = None
+        self._sqs_queue: Queue | None = None
 
-        if max_number_of_messages > 10:
-            raise BrokerError("MaxNumberOfMessages can be no greater than 10")
+        if max_number_of_messages > 10:  # noqa: PLR2004
+            raise SQSBrokerError("MaxNumberOfMessages can be no greater than 10")
 
         self.wait_time_seconds = max(wait_time_seconds, 0)
         self.max_number_of_messages = max(max_number_of_messages, 1)
 
     @property
-    def _sqs_credentials_expired(self):
+    def _sqs_credentials_expired(self) -> datetime | bool:
         return self._creds_expiration and self._creds_expiration < datetime.now(
-            tz=timezone.utc
+            tz=timezone.utc,
         )
 
     async def _sqs_client(self) -> SQSServiceResource:
@@ -97,11 +101,12 @@ class SQSBroker(AsyncBroker):
 
         sqs = await self._sqs_client()
         self._sqs_queue = await asyncify(sqs.get_queue_by_name)(
-            QueueName=self.sqs_queue_url.split("/")[-1]
+            QueueName=self.sqs_queue_url.split("/")[-1],
         )
 
         if not self._sqs_queue:
-            raise Exception("SQS Queue not found")
+            exc_message = "SQS Queue not found"
+            raise Exception(exc_message)  # noqa: TRY002
 
         return self._sqs_queue
 
@@ -109,8 +114,7 @@ class SQSBroker(AsyncBroker):
         self,
         message: BrokerMessage,
     ) -> None:
-        """
-        This method is used to kick tasks out from current program.
+        """This method is used to kick tasks out from current program.
 
         Using this method tasks are sent to
         workers.
@@ -131,19 +135,18 @@ class SQSBroker(AsyncBroker):
                     "expiry": {
                         "StringValue": str(expiry),
                         "DataType": "Number",
-                    }
+                    },
                 },
                 MessageBody=message.message.decode("utf-8"),
                 MessageGroupId=message.task_name,
             )
-        except Exception as err:
-            # taskiq supresses the original exception, but it wold be good to know about
+        except Exception:
+            # taskiq suppresses the original exception, but it wold be good to know about
             logger.exception("Unhandled exception in SQSBroker")
-            raise err
+            raise
 
-    async def listen(self) -> AsyncGenerator[Union[bytes, AckableMessage], None]:
-        """
-        This function listens to new messages and yields them.
+    async def listen(self) -> AsyncGenerator[bytes | AckableMessage, None]:
+        """This function listens to new messages and yields them.
 
         This it the main point for workers.
         This function is used to get new tasks from the network.
@@ -157,7 +160,6 @@ class SQSBroker(AsyncBroker):
         :yield: incoming messages.
         :return: nothing.
         """
-
         # TODO: Consider using AckableMessage and confirm with the queue to reduce lost messages
         while True:
             no_backoff = False
@@ -174,18 +176,17 @@ class SQSBroker(AsyncBroker):
                     WaitTimeSeconds=self.wait_time_seconds,
                 ):
                     try:
-                        if message.message_attributes:
-                            # if expiry was set as a message attribute, respect it
-                            if expiry_typed := message.message_attributes.get("expiry"):
-                                expiry = int(expiry_typed.get("StringValue", 0))
-                                now = stamp()
-                                if 0 < expiry < now:
-                                    logger.warn(
-                                        f"Message expired {now - expiry} seconds ago. Skipping."
-                                    )
-                                    await asyncify(message.delete)()
-                                    no_backoff = True
-                                    continue
+                        if message.message_attributes and (expiry_typed := message.message_attributes.get("expiry")):
+                            expiry = int(expiry_typed.get("StringValue", 0))
+                            now = stamp()
+                            if 0 < expiry < now:
+                                logger.warning(
+                                    "Message expired %s seconds ago. Skipping.",
+                                    now - expiry,
+                                )
+                                await asyncify(message.delete)()
+                                no_backoff = True
+                                continue
                     except TypeError:
                         # Ignore weird expiries.  Not critical.
                         pass
@@ -197,12 +198,12 @@ class SQSBroker(AsyncBroker):
                     except ClientError as err:
                         if "receipt handle has expired" in str(err):
                             # while not ideal, we shouldn't die on this
-                            logger.error(
+                            logger.exception(
                                 "Message receipt handle has expired. This could indicate duplicate"
-                                "processing or tasks being processed late."
+                                "processing or tasks being processed late.",
                             )
                         else:
-                            raise err
+                            raise
 
                     no_backoff = True
             except ClientError as err:
@@ -211,9 +212,9 @@ class SQSBroker(AsyncBroker):
                     logger.warning("ECS credentials expired.")
                     continue
                 else:
-                    raise err
+                    raise
 
             sleepdur = 0.01 if no_backoff else 1
-            logger.debug(f"No messages on queue. Broker is sleeping for {sleepdur}s...")
+            logger.debug("No messages on queue. Broker is sleeping for %d seconds...", sleepdur)
             await asyncio.sleep(sleepdur)
             no_backoff = False

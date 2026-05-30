@@ -1,7 +1,7 @@
 from taskiq_sqs import SQSBroker
 
 
-def test_init():
+def test_init() -> None:
     broker = SQSBroker("https://sqs.us-west-2.amazonaws.com/123456789012/queue-name")
     assert (
         broker.sqs_queue_url
