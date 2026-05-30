@@ -1,10 +1,7 @@
-from __future__ import (
-    annotations,  # Needed for conditional type import support
-)
-
 import asyncio
 import logging
 from collections import defaultdict
+from collections.abc import AsyncGenerator, Callable, Mapping
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
@@ -12,17 +9,16 @@ import boto3
 from asyncer import asyncify
 from botocore.exceptions import ClientError
 from taskiq import AsyncBroker
+from taskiq.abc.result_backend import AsyncResultBackend
+from taskiq.acks import AckableMessage
+from taskiq.message import BrokerMessage
 
 from taskiq_sqs.aws import get_container_credentials
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Callable, Mapping
-
     from mypy_boto3_sqs.service_resource import Queue, SQSServiceResource
-    from taskiq.abc.result_backend import AsyncResultBackend
-    from taskiq.acks import AckableMessage
-    from taskiq.message import BrokerMessage
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +47,7 @@ class SQSBroker(AsyncBroker):
         super().__init__(result_backend, task_id_generator)
 
         if not sqs_queue_url or not sqs_queue_url.startswith("http"):
-            raise SQSBrokerError("A valid SQS Queue URL is required")
+            raise SQSBrokerError("A valid SQS queue url is required")
 
         # NOTE: This bypasses the normal order of operations for boto3 auth and
         #       goes straight to using the ECS role creds from the metadata
@@ -62,6 +58,7 @@ class SQSBroker(AsyncBroker):
         self.sqs_queue_url = sqs_queue_url
         self._sqs: SQSServiceResource | None = None
         self._sqs_queue: Queue | None = None
+        self._creds_expiration: datetime | None = None
 
         if max_number_of_messages > 10:  # noqa: PLR2004
             raise SQSBrokerError("MaxNumberOfMessages can be no greater than 10")
@@ -70,12 +67,10 @@ class SQSBroker(AsyncBroker):
         self.max_number_of_messages = max(max_number_of_messages, 1)
 
     @property
-    def _sqs_credentials_expired(self) -> datetime | bool:
-        return self._creds_expiration and self._creds_expiration < datetime.now(
-            tz=timezone.utc,
-        )
+    def _sqs_credentials_expired(self) -> datetime | bool | None:
+        return self._creds_expiration and self._creds_expiration < datetime.now(tz=timezone.utc)
 
-    async def _sqs_client(self) -> SQSServiceResource:
+    async def _sqs_client(self) -> "SQSServiceResource":
         if self._sqs and not self._sqs_credentials_expired:
             return self._sqs
 
@@ -95,7 +90,7 @@ class SQSBroker(AsyncBroker):
             aws_session_token=creds.get("Token"),
         )
 
-    async def _get_queue(self) -> Queue:
+    async def _get_queue(self) -> "Queue":
         if self._sqs_queue and not self._sqs_credentials_expired:
             return self._sqs_queue
 
@@ -105,7 +100,7 @@ class SQSBroker(AsyncBroker):
         )
 
         if not self._sqs_queue:
-            exc_message = "SQS Queue not found"
+            exc_message = "SQS queue not found"
             raise Exception(exc_message)  # noqa: TRY002
 
         return self._sqs_queue

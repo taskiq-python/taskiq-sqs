@@ -1,0 +1,43 @@
+services:
+  ministack:
+    image: ministackorg/ministack:1.3.53
+    container_name: taskiq_sqs_ministack
+    ports:
+      - "4566:4566"
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
+      GATEWAY_PORT: 4566
+      MINISTACK_ACCOUNT_ID: "000000000000"
+      MINISTACK_REGION: us-east-1
+      LOG_LEVEL: INFO
+      PERSIST_STATE: "1"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_ministack/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    volumes:
+      - ministack-data:/tmp/ministack-state
+    networks:
+      - taskiq-sqs-network
+
+  redis:
+    image: bitnamilegacy/redis:7.4.2
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"  # pragma: allowlist secret
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    ports:
+      - 6379:6379
+
+networks:
+  taskiq-sqs-network:
+    driver: bridge
+
+volumes:
+  ministack-data:

@@ -50,7 +50,6 @@ dev = [
 test = [
     "pytest>=9.0.3",
     "pytest-asyncio>=0.23.8",
-    "requests>=2.34.2",
 ]
 lint = [
     "bandit>=1.9.4",
@@ -60,8 +59,11 @@ lint = [
 types = [
     "mypy>=2.1.0",
     "mypy-boto3-sqs>=1.34.101",
-    "types-requests>=2.33.0.20260518",
     "boto3-stubs[essential]>=1.34.84",
+]
+examples = [
+    "python-dotenv>=1.2.2",
+    "taskiq-redis>=1.2.2",
 ]
 
 
@@ -137,6 +139,11 @@ ignore = [
     "D",
     "S101",  # assert usage
     "SLF001",  # private member accessed
+]
+"examples/*" = [
+    "T201",  # print
+    "D",
+    "INP001",
 ]
 
 [tool.ruff.lint.pydocstyle]
