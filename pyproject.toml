@@ -65,7 +65,6 @@ types = [
 ]
 examples = [
     "python-dotenv>=1.2.2",
-    "taskiq-redis>=1.2.2",
 ]
 
 
