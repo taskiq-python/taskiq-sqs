@@ -1,12 +1,10 @@
 from taskiq_sqs import SQSBroker
 
 
-def test_init() -> None:
-    broker = SQSBroker("https://sqs.us-west-2.amazonaws.com/123456789012/queue-name")
-    assert (
-        broker.sqs_queue_url
-        == "https://sqs.us-west-2.amazonaws.com/123456789012/queue-name"
-    )
-    assert broker.force_ecs_container_credentials is False
-    assert broker.sqs_region_override is None
-    assert broker._sqs_queue is None
+class TestInitParameters:
+    async def test_initialization_logic(self) -> None:
+        broker = SQSBroker("http://localhost:4566/000000000000/my-queue")
+        assert broker.sqs_queue_url == "http://localhost:4566/000000000000/my-queue"
+        assert broker.force_ecs_container_credentials is False
+        assert broker.sqs_region_override is None
+        assert broker._sqs_queue is None
