@@ -10,9 +10,8 @@ import asyncio
 
 import boto3
 import dotenv
-from taskiq_redis import RedisAsyncResultBackend
 
-from taskiq_sqs import SQSBroker
+from taskiq_sqs import S3Bucket, S3ResultBackend, SQSBroker
 
 
 dotenv.load_dotenv()
@@ -24,7 +23,7 @@ QUEUE_URL = f"http://localhost:4566/000000000000/{QUEUE_NAME}"
 boto3.client("sqs").create_queue(QueueName=QUEUE_NAME)
 
 broker = SQSBroker(QUEUE_URL, sqs_region_override="us-east-1").with_result_backend(
-    RedisAsyncResultBackend(redis_url="redis://localhost:6379")
+    S3ResultBackend(bucket=S3Bucket(name="response-bucket"))
 )
 
 
