@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from aiobotocore.session import get_session
@@ -35,7 +34,7 @@ class S3ResultBackend(AsyncResultBackend[_ReturnType]):
         """
         Constructs a new S3 result backend.
 
-        :param bucket_name: name of the bucket on S3.
+        :param bucket: S3 bucket configuration.
         :param base_path: base path for results.
         :param endpoint_url: endpoint URL for S3.
         :param aws_region_name: AWS region, default is 'us-east-1'.
@@ -112,7 +111,7 @@ class S3ResultBackend(AsyncResultBackend[_ReturnType]):
         :param result: result of execution.
         """
         if self._base_path:
-            task_id = str(Path(self._base_path) / task_id)
+            task_id = f"{self._base_path.rstrip('/')}/{task_id}"
 
         await self._s3_client.put_object(
             Bucket=self._bucket.name,
@@ -137,7 +136,7 @@ class S3ResultBackend(AsyncResultBackend[_ReturnType]):
         """
         result = None
         if self._base_path:
-            task_id = str(Path(self._base_path) / task_id)
+            task_id = f"{self._base_path.rstrip('/')}/{task_id}"
         try:
             if response := await self._s3_client.get_object(
                 Bucket=self._bucket.name,
@@ -171,7 +170,7 @@ class S3ResultBackend(AsyncResultBackend[_ReturnType]):
         :return: True if result is ready.
         """
         if self._base_path:
-            task_id = str(Path(self._base_path) / task_id)
+            task_id = f"{self._base_path.rstrip('/')}/{task_id}"
         try:
             if await self._s3_client.head_object(Bucket=self._bucket.name, Key=task_id):
                 return True
