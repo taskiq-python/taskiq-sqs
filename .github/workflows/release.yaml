@@ -1,63 +1,28 @@
-on:
-  release:
-    types: [published]
+name: Release
 
-env:
-  AWS_DEFAULT_REGION: "us-east-1"
+on:
+  push:
+    tags:
+      # Publish on any tag starting with a `v`, e.g. v1.2.3
+      - v*
 
 jobs:
-  test:
+  pypi:
+    name: Publish to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: release
+    permissions:
+      id-token: write
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          python-version: "3.10"
-      - run: pip install -e .[dev]
-      - run: pytest
-
-  test-release:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-python@v2
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
-          python-version: "3.10"
-
-      - name: Install dependencies
-        run: pip install -e .[dev]
-
-      - name: Build dist
-        run: python -m build
-
-      - name: Publish release to test PyPi
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
-
-  release:
-    needs: test-release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: "3.10"
-
-      - name: Install dependencies
-        run: pip install -e .[dev]
-
-      - name: Build dist
-        run: python -m build
-
-      - name: Publish release to test PyPi
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          enable-cache: false
+          python-version: "3.12"
+          version: "latest"
+      - run: uv version "${GITHUB_REF_NAME}"
+      - run: uv build
+      - run: uv publish --trusted-publishing always --token "${secrets.PYPI_API_TOKEN}"
