@@ -46,7 +46,7 @@ class TestResultBackend:
         with pytest.raises(ResultIsMissingError):
             await s3_backend.get_result("test_task_id")
 
-    async def test_when_set_result_is_callend__then_save_it_to_right_path(
+    async def test_when_set_result_is_called__then_save_it_to_right_path(
         self,
         s3_backend: S3ResultBackend,
         s3_bucket: str,
@@ -80,7 +80,7 @@ class TestResultBackend:
         with pytest.raises(ResultIsMissingError):
             await s3_backend.get_result("non_existent_task_id")
 
-    async def test_when_result_existis__when_is_result_ready_should_return_true(
+    async def test_when_result_exists__when_is_result_ready_should_return_true(
         self,
         s3_backend: S3ResultBackend,
         taskiq_result: TaskiqResult,

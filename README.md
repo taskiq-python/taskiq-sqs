@@ -26,7 +26,7 @@ broker = SQSBroker(
     sqs_region_override="us-east-1"
 ).with_result_backend(
     S3ResultBackend(
-        bucket=S3Bucket(name="response-bucket")  # by default backend will create bucket for your if it not exists
+        bucket=S3Bucket(name="response-bucket")  # by default backend will create bucket for you if it does not exist
     )
 )
 

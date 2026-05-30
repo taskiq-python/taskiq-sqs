@@ -70,7 +70,11 @@ class S3ResultBackend(AsyncResultBackend[_ReturnType]):
     async def startup(self) -> None:
         """Initialize the result backend."""
         self._s3_client = await self._get_client()
-        await self._ensure_bucket_exists()
+        try:
+            await self._ensure_bucket_exists()
+        except Exception:
+            await self._client_context_creator.__aexit__(None, None, None)
+            raise
         return await super().startup()
 
     async def _ensure_bucket_exists(self) -> None:
