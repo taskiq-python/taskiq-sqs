@@ -5,6 +5,7 @@ import pytest
 from aiobotocore.session import get_session
 
 from taskiq_sqs import S3ResultBackend
+from taskiq_sqs.bucket import S3Bucket
 
 
 if TYPE_CHECKING:
@@ -73,7 +74,7 @@ async def s3_backend(
     aws_credentials: AWSCredentials,
     s3_bucket: str,  # noqa: ARG001
 ) -> AsyncGenerator[S3ResultBackend, Any]:
-    backend = S3ResultBackend(bucket_name=TEST_BUCKET, **aws_credentials)
+    backend = S3ResultBackend(bucket=S3Bucket(name=TEST_BUCKET), **aws_credentials)
     await backend.startup()
     assert backend._s3_client
     yield backend
