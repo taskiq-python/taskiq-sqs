@@ -14,6 +14,7 @@ from taskiq.acks import AckableMessage
 from taskiq.message import BrokerMessage
 
 from taskiq_sqs.aws import get_container_credentials
+from taskiq_sqs.exceptions import BrokerInitError
 
 
 if TYPE_CHECKING:
@@ -25,10 +26,6 @@ logger = logging.getLogger(__name__)
 
 def stamp() -> int:  # noqa: D103
     return int(datetime.now(tz=timezone.utc).timestamp())
-
-
-class SQSBrokerError(Exception):
-    """Generic SQS broker error."""
 
 
 class SQSBroker(AsyncBroker):
@@ -47,7 +44,7 @@ class SQSBroker(AsyncBroker):
         super().__init__(result_backend, task_id_generator)
 
         if not sqs_queue_url or not sqs_queue_url.startswith("http"):
-            raise SQSBrokerError("A valid SQS queue url is required")
+            raise BrokerInitError(details="A valid SQS queue url is required")
 
         # NOTE: This bypasses the normal order of operations for boto3 auth and
         #       goes straight to using the ECS role creds from the metadata
@@ -61,7 +58,7 @@ class SQSBroker(AsyncBroker):
         self._creds_expiration: datetime | None = None
 
         if max_number_of_messages > 10:  # noqa: PLR2004
-            raise SQSBrokerError("MaxNumberOfMessages can be no greater than 10")
+            raise BrokerInitError(details="MaxNumberOfMessages can be no greater than 10")
 
         self.wait_time_seconds = max(wait_time_seconds, 0)
         self.max_number_of_messages = max(max_number_of_messages, 1)
@@ -100,8 +97,7 @@ class SQSBroker(AsyncBroker):
         )
 
         if not self._sqs_queue:
-            exc_message = "SQS queue not found"
-            raise Exception(exc_message)  # noqa: TRY002
+            raise BrokerInitError(details="SQS queue not found")
 
         return self._sqs_queue
 
