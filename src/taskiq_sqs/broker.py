@@ -1,7 +1,6 @@
 import contextlib
 import logging
 from collections.abc import AsyncGenerator, Awaitable, Callable, Generator
-from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from aiobotocore.session import get_session
@@ -30,7 +29,7 @@ logger = logging.getLogger(__name__)
 class SQSBroker(AsyncBroker):
     """AWS SQS TaskIQ broker."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         queue_name: str,
         endpoint_url: str | None = None,
@@ -39,7 +38,6 @@ class SQSBroker(AsyncBroker):
         aws_secret_access_key: str | None = None,
         wait_time_seconds: int = 0,
         max_number_of_messages: int = 1,
-        force_ecs_container_credentials: bool = False,
     ) -> None:
         """Initialize the SQS broker.
 
@@ -50,9 +48,6 @@ class SQSBroker(AsyncBroker):
         :param aws_secret_access_key: The AWS secret access key.
         :param: wait_time_seconds: The wait time used for long polling.
         :param: max_number_of_messages: Size of batch to receive from the queue.
-        :param: force_ecs_container_credentials:  This bypasses the normal order of operations for boto3 auth and
-            goes straight to using the ECS role creds from the metadata service. This can be useful in edge cases
-            where there are higher priority credentials you do not want to use for this service.
         """
         super().__init__()
 
@@ -83,9 +78,6 @@ class SQSBroker(AsyncBroker):
         except ValueError as error:
             raise BrokerInitError(details="Invalid default queue configuration.") from error
 
-        self._force_ecs_container_credentials = force_ecs_container_credentials
-        self._creds_expiration: datetime | None = None
-
     @contextlib.contextmanager
     def _handle_exceptions(self) -> Generator[None, None, None]:
         """Handle exceptions raised by the SQS client."""
@@ -103,10 +95,6 @@ class SQSBroker(AsyncBroker):
                 raise BrokerInitError(details=error_message or "") from e
             else:
                 raise BrokerInitError(details=code or "") from e
-
-    @property
-    def _sqs_credentials_expired(self) -> datetime | bool | None:
-        return self._creds_expiration and self._creds_expiration < datetime.now(tz=timezone.utc)
 
     async def _get_sqs_client(self) -> "SQSClient":
         self._client_context_creator = self._session.create_client(
