@@ -1,10 +1,13 @@
+import uuid
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Any, TypedDict
 
 import pytest
 from aiobotocore.session import get_session
+from taskiq import BrokerMessage
+from types_aiobotocore_sqs.client import SQSClient
 
-from taskiq_sqs import S3ResultBackend
+from taskiq_sqs import S3ResultBackend, SQSBroker
 from taskiq_sqs.bucket import S3Bucket
 
 
@@ -13,6 +16,7 @@ if TYPE_CHECKING:
 
 ENDPOINT_URL = "http://localhost:4566"
 TEST_BUCKET = "test-bucket"
+QUEUE_NAME = "test-queue"
 
 
 class AWSCredentials(TypedDict):
@@ -79,3 +83,55 @@ async def s3_backend(
     assert backend._s3_client
     yield backend
     await backend.shutdown()
+
+
+@pytest.fixture
+async def sqs_client(aws_credentials: AWSCredentials) -> AsyncGenerator[SQSClient, Any]:
+    client_context = get_session().create_client(
+        "sqs",
+        endpoint_url=aws_credentials["endpoint_url"],
+        aws_access_key_id=aws_credentials["aws_access_key_id"],
+        aws_secret_access_key=aws_credentials["aws_secret_access_key"],
+        region_name=aws_credentials["aws_region_name"],
+    )
+    yield await client_context.__aenter__()
+    await client_context.__aexit__(None, None, None)
+
+
+@pytest.fixture
+async def sqs_queue(sqs_client: SQSClient) -> AsyncGenerator[str, Any]:
+    queue_name = f"{QUEUE_NAME}-{uuid.uuid4().hex}"
+    response = await sqs_client.create_queue(QueueName=queue_name)
+    queue_url = response["QueueUrl"]
+    yield queue_url
+    await sqs_client.delete_queue(QueueUrl=queue_url)
+
+
+def _queue_name_from_url(queue_url: str) -> str:
+    return queue_url.rsplit("/", maxsplit=1)[-1]
+
+
+@pytest.fixture
+async def sqs_broker(
+    aws_credentials: AWSCredentials,
+    sqs_queue: str,
+) -> AsyncGenerator[SQSBroker, Any]:
+    broker = SQSBroker(
+        queue_name=_queue_name_from_url(sqs_queue),
+        **aws_credentials,
+    )
+    await broker.startup()
+    assert broker._sqs_client
+    assert broker._sqs_queue_url
+    yield broker
+    await broker.shutdown()
+
+
+@pytest.fixture
+def broker_message() -> BrokerMessage:
+    return BrokerMessage(
+        task_id="test_task",
+        task_name="test_task",
+        message=b"test_message",
+        labels={},
+    )
