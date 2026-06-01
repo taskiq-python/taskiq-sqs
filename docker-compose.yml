@@ -22,19 +22,6 @@ services:
     networks:
       - taskiq-sqs-network
 
-  redis:
-    image: bitnamilegacy/redis:7.4.2
-    environment:
-      ALLOW_EMPTY_PASSWORD: "yes"  # pragma: allowlist secret
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    ports:
-      - 6379:6379
-
 networks:
   taskiq-sqs-network:
     driver: bridge

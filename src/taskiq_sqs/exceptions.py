@@ -12,6 +12,13 @@ class BrokerInitError(BaseTaskiqSQSError):
     details: str
 
 
+class InvalidEnvironmentError(BaseTaskiqSQSError):
+    """Error in case something wrong with environment variables."""
+
+    __template__ = "Something wrong with env: {details}"
+    details: str
+
+
 class ResultBackendError(BaseTaskiqSQSError):
     """Base error for all taskiq-aio-sqs broker exceptions."""
 
@@ -24,6 +31,7 @@ class BucketNotFoundError(BaseTaskiqSQSError):
 
     __template__ = "Bucket '{bucket_name}' not found during initialization and declare=False"
     bucket_name: str
+
 
 class ResultIsMissingError(BaseTaskiqSQSError):
     """Error if there is no result when we trying to get it."""
