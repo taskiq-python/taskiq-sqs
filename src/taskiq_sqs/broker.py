@@ -216,7 +216,7 @@ class SQSBroker(AsyncBroker):
                 MaxNumberOfMessages=self._max_number_of_messages,
                 WaitTimeSeconds=self._wait_time_seconds,
             )
-            messages: list[MessageTypeDef] = results["Messages"]
+            messages: list[MessageTypeDef] = results.get("Messages", [])
 
             for message in messages:
                 if (body := message.get("Body")) and (receipt_handle := message.get("ReceiptHandle")):
