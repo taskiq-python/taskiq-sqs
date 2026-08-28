@@ -12,7 +12,7 @@ services:
       LOG_LEVEL: INFO
       PERSIST_STATE: "1"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/_ministack/health"]
+      test: ["CMD", "busybox", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4566/_ministack/health"]
       interval: 2s
       timeout: 5s
       retries: 30
