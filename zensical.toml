@@ -23,13 +23,17 @@ nav = [
 
 use_directory_urls = true
 
+extra_css = [
+    "assets/extra.css",]
+
 [project.extra]
 site_tagline = "SQS broker and S3 result backend for TaskIQ"
 
 [project.theme]
 language = "en"
 custom_dir = "overrides"
-
+logo = "https://raw.githubusercontent.com/taskiq-python/taskiq/refs/heads/master/imgs/small-logo.svg"
+favicon = "https://raw.githubusercontent.com/taskiq-python/taskiq/refs/heads/master/imgs/small-logo.svg"
 features = [
     "content.code.annotate",
     "content.code.copy",
@@ -52,6 +56,8 @@ repo = "fontawesome/brands/github"
 # Palette toggle for automatic mode
 [[project.theme.palette]]
 media = "(prefers-color-scheme)"
+primary = "white"
+accent = "red"
 toggle.icon = "lucide/sun-moon"
 toggle.name = "Switch to light mode"
 
@@ -59,7 +65,8 @@ toggle.name = "Switch to light mode"
 [[project.theme.palette]]
 media = "(prefers-color-scheme: light)"
 scheme = "default"
-primary = "indigo"
+primary = "white"
+accent = "red"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
@@ -67,7 +74,8 @@ toggle.name = "Switch to dark mode"
 [[project.theme.palette]]
 media = "(prefers-color-scheme: dark)"
 scheme = "slate"
-primary = "indigo"
+primary = "black"
+accent = "red"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to system preference"
 
