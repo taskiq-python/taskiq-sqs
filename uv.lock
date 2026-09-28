@@ -1349,7 +1349,7 @@ wheels = [
 
 [[package]]
 name = "taskiq-sqs"
-version = "0.0.11"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "capo-s3" },
