@@ -243,27 +243,27 @@ wheels = [
 
 [[package]]
 name = "capo-s3"
-version = "0.15.0"
+version = "0.17.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "zapros" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/33/891a89331363ab751dd9d16b8d98e84d959a066000c08d15eb69dd7be580/capo_s3-0.15.0.tar.gz", hash = "sha256:4346b5bafa76369c250f5534f55944bcd32e70bb158f955ad10c1658af4225a1", size = 619454, upload-time = "2026-08-26T19:58:26.121Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/91/f51320d79a23e5503ff685c8e09f52ed374ed642b5fa5a99b3f315aaa986/capo_s3-0.17.0.tar.gz", hash = "sha256:8ced7003d146a4fda530d561d8967c338454c50c1872ce01cae8bbf33a25088b", size = 623569, upload-time = "2026-09-24T10:52:56.753Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/7d/faec005b8628a6cefc5d892c2df01569db73bc0e852315ef3b72d1f1d04f/capo_s3-0.15.0-py3-none-any.whl", hash = "sha256:31b37af42230734c11d7e52d19d4f8799cfa55ac4667b232957fc0fa9ed083f9", size = 1186735, upload-time = "2026-08-26T19:58:24.691Z" },
+    { url = "https://files.pythonhosted.org/packages/31/3a/ce54ce3aedb37e5a02c253462963dcc3e2d0ddb3e50f80896b86032b3c7b/capo_s3-0.17.0-py3-none-any.whl", hash = "sha256:606cf5b89669bc10c02268b30e6766c3c6f634e48112462371be9769488de9a6", size = 1188860, upload-time = "2026-09-24T10:52:55.269Z" },
 ]
 
 [[package]]
 name = "capo-sqs"
-version = "0.6.0"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "zapros" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/12/1e/53a8187c9ac5ad59bb9c8af1912867c84b1e403067670d172151330d4d91/capo_sqs-0.6.0.tar.gz", hash = "sha256:fe0124256af2ad10e1c1eae9faab556fe84f5f8690eaa8a60a055b545af2497f", size = 131534, upload-time = "2026-08-26T19:58:49.803Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/74/b31248c7d0272dd2a77b620f284325ced666bc17b25d72aa938949443ea3/capo_sqs-0.8.0.tar.gz", hash = "sha256:6afbc86efae427a90b878a810a1164a50e9b68ca628fe239314fb2052f257e03", size = 135108, upload-time = "2026-09-24T10:53:18.023Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/65/6b/447c96396403460414781275fb924157067b8b6a037f573bd72e4147970f/capo_sqs-0.6.0-py3-none-any.whl", hash = "sha256:832bcca433e8eb5ab8e30ec53b57b80903c7d69bc2d620690c51ad057ceb0b45", size = 234627, upload-time = "2026-08-26T19:58:48.692Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/58/f018858ad3134be43063ff728a074a62bea2b651034f0378c750dc460357/capo_sqs-0.8.0-py3-none-any.whl", hash = "sha256:9bb39ae056b6dd53f419ae419c2d762af12d03f0f64872dab1e3d3772778353b", size = 236366, upload-time = "2026-09-24T10:53:16.951Z" },
 ]
 
 [[package]]
@@ -1324,19 +1324,18 @@ wheels = [
 
 [[package]]
 name = "taskiq"
-version = "0.12.6"
+version = "0.13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "anyio" },
-    { name = "packaging" },
     { name = "pycron" },
     { name = "pydantic" },
     { name = "taskiq-dependencies" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/6b/a7df3a5d1e7bbfe75a41f378f71c16e89ac19fbab931f8e8d76a8e339357/taskiq-0.12.6.tar.gz", hash = "sha256:4667db6366cfda24d23f0e34151b118d71b0907229f8ff00db9dbc2465f7baf8", size = 408574, upload-time = "2026-08-29T08:07:44.052Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/09/c6/a6e5a15158e1db35b458f68f40b3e44c32134d7edad6bfcdb5bbd4128174/taskiq-0.13.0.tar.gz", hash = "sha256:7d56609a6c5a20b0c9da67e9f310ec9640266f620b8f81880bccd5f16913e687", size = 411167, upload-time = "2026-09-26T14:45:16.997Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/89/949d2d26ae24a5282b37d39e7e05b714f960840166458c7bc78cfade83b5/taskiq-0.12.6-py3-none-any.whl", hash = "sha256:fa8c5071ecafc6a1891e5ede1dc580093d99bccaf0d258b1848d2e5f35d22250", size = 94895, upload-time = "2026-08-29T08:07:42.591Z" },
+    { url = "https://files.pythonhosted.org/packages/59/9c/c4fb8085424ef1c5479877f0f16f8dc4b406dcf6f367d51464bbf134d086/taskiq-0.13.0-py3-none-any.whl", hash = "sha256:b51e1961d8919bc897caa6f5484ac08d812341413a20a3704b69c597c4c154d2", size = 94856, upload-time = "2026-09-26T14:45:15.768Z" },
 ]
 
 [[package]]
@@ -1350,7 +1349,7 @@ wheels = [
 
 [[package]]
 name = "taskiq-sqs"
-version = "0.0.11"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "capo-s3" },
@@ -1389,9 +1388,9 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "capo-s3", specifier = ">=0.15.0" },
-    { name = "capo-sqs", specifier = ">=0.6.0" },
-    { name = "taskiq", specifier = ">=0.12.6" },
+    { name = "capo-s3", specifier = ">=0.16.0" },
+    { name = "capo-sqs", specifier = ">=0.7.0" },
+    { name = "taskiq", specifier = ">=0.13.0" },
 ]
 
 [package.metadata.requires-dev]

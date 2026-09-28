@@ -4,7 +4,6 @@ from typing import Any, TypeVar
 import capo_s3
 from taskiq import AsyncResultBackend
 from taskiq.abc.serializer import TaskiqSerializer
-from taskiq.compat import model_dump, model_validate
 from taskiq.result import TaskiqResult
 from taskiq.serializers import JSONSerializer
 
@@ -110,7 +109,7 @@ class S3ResultBackend(AsyncResultBackend[_ReturnType]):
         await self._s3_client.put_object(
             bucket=self._bucket["name"],
             key=self._build_key(task_id),
-            body=self._serializer.dumpb(model_dump(result)),
+            body=self._serializer.dumpb(result.model_dump(mode="json")),
         )
 
     async def get_result(
@@ -136,10 +135,7 @@ class S3ResultBackend(AsyncResultBackend[_ReturnType]):
         except capo_s3.errors.ServiceError as exc:
             raise exceptions.ResultBackendError(code=exc.code) from exc
 
-        taskiq_result = model_validate(
-            TaskiqResult[_ReturnType],
-            self._serializer.loadb(body),
-        )
+        taskiq_result = TaskiqResult[_ReturnType].model_validate(self._serializer.loadb(body))
 
         if not with_logs:
             taskiq_result.log = None
