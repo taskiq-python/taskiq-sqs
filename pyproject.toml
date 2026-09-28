@@ -29,9 +29,9 @@ classifiers = [
 keywords = ["taskiq", "broker", "aws", "sqs"]
 requires-python = ">=3.11"
 dependencies = [
-    "taskiq>=0.12.6",
-    "capo-s3>=0.15.0",
-    "capo-sqs>=0.6.0",
+    "taskiq>=0.13.0",
+    "capo-s3>=0.16.0",
+    "capo-sqs>=0.7.0",
 ]
 
 [project.urls]
